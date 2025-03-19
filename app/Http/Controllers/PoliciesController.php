@@ -41,6 +41,15 @@ class PoliciesController extends Controller
         return redirect()->route('policies.index');
     }
 
+    public function show($id)
+    {
+        $policy = Policies::findOrFail($id);
+
+        return Inertia::render('policies/view', [
+            'policy' => $policy,
+        ]);
+    }
+
     public function edit($id)
     {
         $policy = Policies::find($id);

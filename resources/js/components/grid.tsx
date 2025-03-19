@@ -3,6 +3,7 @@ import { Link, router } from '@inertiajs/react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationPrevious, PaginationLink, PaginationNext } from './ui/pagination';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Eye, PenIcon, Trash2Icon } from 'lucide-react';
 import { useState } from 'react';
 
 interface HeaderItem {
@@ -42,9 +43,10 @@ interface GridProps {
     };
     headers: HeaderItem[];
     editRouteName?: string; // Optional: can be provided explicitly if needed
+    viewRouteName?: string; // Optional: route name for view action
 }
 
-export function Grid({ data, headers, editRouteName }: GridProps) {
+export function Grid({ data, headers, editRouteName, viewRouteName }: GridProps) {
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -61,21 +63,29 @@ export function Grid({ data, headers, editRouteName }: GridProps) {
     const path = data.path ?? '';
     const hasPagination = data.last_page !== undefined && data.last_page > 1;
 
-    // Determine the edit route name dynamically if not explicitly provided
-    let routeName = editRouteName;
-    if (!routeName && typeof window !== 'undefined') {
+    // Determine the route names dynamically if not explicitly provided
+    let routeEdit = editRouteName;
+    let routeView = viewRouteName;
+
+    if (typeof window !== 'undefined') {
         // Get the current URL path segments
         const pathSegments = window.location.pathname.split('/');
         // The first segment after the base URL is typically the resource name (e.g., 'policies')
         const resourceName = pathSegments.filter(segment => segment).shift();
-        // Construct the route name (e.g., 'policies.edit')
+
+        // Construct the route names if not provided
         if (resourceName) {
-            routeName = `${resourceName}.edit`;
+            if (!routeEdit) {
+                routeEdit = `${resourceName}.edit`;
+            }
+            if (!routeView) {
+                routeView = `${resourceName}.show`;
+            }
         }
     }
 
     // Get the resource name for delete route
-    const deleteRouteName = routeName?.replace('.edit', '.destroy');
+    const deleteRouteName = routeEdit?.replace('.edit', '.destroy');
 
     const handleDelete = () => {
         if (deleteId !== null) {
@@ -99,7 +109,7 @@ export function Grid({ data, headers, editRouteName }: GridProps) {
                         {headers.map((header) => (
                             <TableHead key={header.key}>{header.label}</TableHead>
                         ))}
-                        <TableHead className='max-w-[100px]'>Actions</TableHead>
+                        <TableHead className='max-w-[150px]'>Actions</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -117,11 +127,20 @@ export function Grid({ data, headers, editRouteName }: GridProps) {
                                         {formatCellData(row, header.key)}
                                     </TableCell>
                                 ))}
-                                <TableCell className='max-w-[100px]'>
+                                <TableCell>
                                     <div className="flex gap-2">
-                                        {routeName && (
-                                            <Button variant="outline" size="sm" asChild>
-                                                <Link href={route(routeName, row.id)}>
+                                        {routeView && (
+                                            <Button variant="outline" size="sm" asChild className="flex items-center">
+                                                <Link href={route(routeView, row.id)}>
+                                                    <Eye className="h-4 w-4 mr-1" />
+                                                    View
+                                                </Link>
+                                            </Button>
+                                        )}
+                                        {routeEdit && (
+                                            <Button variant="outline" size="sm" asChild className="flex items-center">
+                                                <Link href={route(routeEdit, row.id)}>
+                                                    <PenIcon className="h-4 w-4 mr-1" />
                                                     Edit
                                                 </Link>
                                             </Button>
@@ -131,7 +150,9 @@ export function Grid({ data, headers, editRouteName }: GridProps) {
                                                 variant="destructive"
                                                 size="sm"
                                                 onClick={() => openDeleteDialog(row.id)}
+                                                className="flex items-center"
                                             >
+                                                <Trash2Icon className="h-4 w-4 mr-1" />
                                                 Delete
                                             </Button>
                                         )}

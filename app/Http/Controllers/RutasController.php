@@ -139,4 +139,13 @@ class RutasController extends Controller
 
         return redirect()->route('rutas.index');
     }
+
+    public function show($id)
+    {
+        $ruta = Rutas::with('detalles')->findOrFail($id);
+
+        return Inertia::render('rutas/view', [
+            'ruta' => $ruta,
+        ]);
+    }
 }
