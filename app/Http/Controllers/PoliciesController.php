@@ -49,4 +49,25 @@ class PoliciesController extends Controller
             'policy' => $policy,
         ]);
     }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'name' => 'required',
+            'code' => 'required',
+        ]);
+
+        $policy = Policies::find($id);
+        $policy->update($request->all());
+
+        return redirect()->route('policies.index');
+    }
+
+    public function destroy($id)
+    {
+        $policy = Policies::find($id);
+        $policy->delete();
+
+        return redirect()->route('policies.index');
+    }
 }

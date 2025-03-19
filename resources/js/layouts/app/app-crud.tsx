@@ -25,11 +25,18 @@ export default function CrudLayout({ children }: PropsWithChildren) {
     }
 
     const currentPath = window.location.pathname;
-    // Get the base path by removing the last segment (index or create)
-    const basePath = currentPath.split('/').slice(0, -1).join('/');
+
+    // Extract the resource base path (e.g., /policies)
+    // Get all path segments and find the resource name
+    const pathSegments = currentPath.split('/').filter(segment => segment);
+    // The first segment is typically the resource name
+    const resourceName = pathSegments[0];
+    // Create the proper base path
+    const basePath = `/${resourceName}`;
 
     // Check which page we're on for highlighting the active link
-    const currentPage = currentPath.split('/').pop();
+    const lastSegment = pathSegments[pathSegments.length - 1];
+    const currentPage = sidebarNavItems.some(item => item.href === lastSegment) ? lastSegment : 'index';
 
     return (
         <div className="px-4 py-6 h-full">

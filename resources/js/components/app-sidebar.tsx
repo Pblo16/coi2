@@ -15,7 +15,12 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Policies',
-        href: '/policies',
+        href: '/policies/index',
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Rutas',
+        href: '/rutas/index',
         icon: LayoutGrid,
     },
 ];
