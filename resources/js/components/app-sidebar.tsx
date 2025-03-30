@@ -18,11 +18,6 @@ const mainNavItems: NavItem[] = [
         href: '/policies/index',
         icon: LayoutGrid,
     },
-    {
-        title: 'Rutas',
-        href: '/rutas/index',
-        icon: LayoutGrid,
-    },
 ];
 
 export function AppSidebar() {
