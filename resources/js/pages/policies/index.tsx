@@ -1,7 +1,7 @@
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
 
-import { Grid } from '@/components/grid';
+import { ExpandableGrid } from '@/components/expandable-grid';
 import AppLayout from '@/layouts/app-layout';
 import CrudLayout from '@/layouts/app/app-crud';
 
@@ -23,7 +23,12 @@ export default function Index({ policies, headers }: PoliciesProps) {
             <Head title="Policies" />
 
             <CrudLayout>
-                <Grid data={policies} headers={headers} />
+                <ExpandableGrid
+                    data={policies}
+                    headers={headers}
+                    childrenKey="subpolicies"
+                    childHeaders={[{ key: 'name', label: 'Name' }]}
+                />
             </CrudLayout>
         </AppLayout>
     );

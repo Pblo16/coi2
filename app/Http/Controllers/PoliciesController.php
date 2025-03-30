@@ -17,7 +17,8 @@ class PoliciesController extends Controller
             ['key' => 'code', "label" => "Code"],
         ];
 
-        $policies = Policies::paginate(10);
+        // Include subpolicies relation in the query
+        $policies = Policies::with('subpolicies')->paginate(10);
 
         return Inertia::render('policies/index', [
             'policies' => $policies,
