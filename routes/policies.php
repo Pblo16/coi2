@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\PoliciesController;
+use App\Http\Controllers\SubpolicesController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -19,4 +20,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('policies/edit/{id}', [PoliciesController::class, 'update'])->name('policies.update');
 
     Route::delete('policies/{id}', [PoliciesController::class, 'destroy'])->name('policies.destroy');
+
+    // Subpolicies routes
+    Route::post('subpolicies', [SubpolicesController::class, 'store'])->name('subpolicies.store');
+    Route::put('subpolicies/{id}', [SubpolicesController::class, 'update'])->name('subpolicies.update');
+    Route::delete('subpolicies/{id}', [SubpolicesController::class, 'destroy'])->name('subpolicies.destroy');
 });

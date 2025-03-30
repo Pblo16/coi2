@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import CrudLayout from '@/layouts/app/app-crud';
+import SubpoliciesGrid from './components/SubpoliciesGrid';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -22,16 +23,24 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+interface Subpolicy {
+    id?: number;
+    name: string;
+    policy_id?: number;
+}
+
 interface PolicyForm {
     name: string;
     code: string;
-    [key: string]: string;
+    subpolicies: Subpolicy[];
+    [key: string]: string | Subpolicy[];
 }
 
 export default function Create() {
     const { data, setData, post, errors, processing, recentlySuccessful } = useForm<PolicyForm>({
         name: '',
         code: '',
+        subpolicies: [],
     });
 
     const submit: FormEventHandler = (e) => {
@@ -80,6 +89,13 @@ export default function Create() {
                             />
 
                             <InputError className="mt-2" message={errors.code} />
+                        </div>
+
+                        <div className="border-t pt-6">
+                            <SubpoliciesGrid
+                                subpolicies={data.subpolicies}
+                                onChange={(subpolicies) => setData('subpolicies', subpolicies)}
+                            />
                         </div>
 
                         <div className="flex items-center gap-4">
