@@ -13,4 +13,9 @@ class Policies extends Model
     {
         return $this->hasMany(Subpolices::class, 'policy_id');
     }
+
+    public function billingDetails(): HasMany
+    {
+        return $this->hasMany(BillingDetail::class, 'policy_id');
+    }
 }
