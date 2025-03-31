@@ -116,13 +116,7 @@ export default function Edit({ billing, policies }: { billing: Billing, policies
                 <div className="space-y-6">
                     <HeadingSmall title="Billing information" description="Update billing details" />
 
-                    {/* Add debug data component in development environment */}
-                    {process.env.NODE_ENV !== 'production' && (
-                        <>
-                            <DebugData data={data.billingDetails} title="Current Billing Details" />
-                            <DebugData data={policies} title="Available Policies" />
-                        </>
-                    )}
+
 
                     <form onSubmit={submit} className="space-y-6">
                         <div className="grid gap-2">
