@@ -112,4 +112,60 @@ class PdfService
             throw $e;
         }
     }
+
+    /**
+     * Generate a PDF for the general ledger report
+     * 
+     * @param array $data Report data
+     * @return \Barryvdh\DomPDF\PDF
+     */
+    public function generateGeneralLedgerPdf(array $data)
+    {
+        try {
+            Log::info('Generating General Ledger PDF', [
+                'startDate' => $data['startDate'],
+                'endDate' => $data['endDate'],
+            ]);
+
+            $pdf = PDF::loadView('pdfs.general-ledger', $data);
+            $pdf->setPaper('a4', 'landscape');
+
+            return $pdf;
+        } catch (\Exception $e) {
+            Log::error('Error generating general ledger PDF', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            throw $e;
+        }
+    }
+
+    /**
+     * Generate a PDF for the account books report
+     * 
+     * @param array $data Report data
+     * @return \Barryvdh\DomPDF\PDF
+     */
+    public function generateAccountBooksPdf(array $data)
+    {
+        try {
+            Log::info('Generating Account Books PDF', [
+                'subpolicy_id' => $data['subpolicy']->id,
+                'startDate' => $data['startDate'],
+                'endDate' => $data['endDate'],
+            ]);
+
+            $pdf = PDF::loadView('pdfs.account-books', $data);
+
+            return $pdf;
+        } catch (\Exception $e) {
+            Log::error('Error generating account books PDF', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            throw $e;
+        }
+    }
 }
