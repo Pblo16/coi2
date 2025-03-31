@@ -209,17 +209,17 @@ export function ExpandableGrid({
                                 ? row[childrenKey].map((child: any, childIndex: number) => (
                                     <TableRow
                                         key={`child-${row.id}-${child.id}`}
-                                        className="bg-neutral-50"
+                                        className="bg-accent"
                                     >
                                         <TableCell>
                                             {/* Empty cell for spacing */}
                                         </TableCell>
                                         <TableCell colSpan={headers.length + 1}>
                                             <div className="pl-6 py-1 flex items-center">
-                                                <div className="mr-2 h-0.5 w-3 bg-neutral-400"></div>
+                                                <div className="mr-2 h-0.5 w-3 bg-accent-foreground"></div>
                                                 {childHeaders.map((header, i) => (
                                                     <div key={i} className="flex mr-4">
-                                                        <span className="text-neutral-500 mr-2">{header.label}:</span>
+                                                        <span className="">{header.label}:</span>
                                                         <span>{formatCellData(child, header.key)}</span>
                                                     </div>
                                                 ))}
