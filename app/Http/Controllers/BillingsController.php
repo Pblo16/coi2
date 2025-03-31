@@ -12,6 +12,23 @@ use Inertia\Inertia;
 class BillingsController extends Controller
 {
     /**
+     * Checks if billing details are balanced (debits equal credits)
+     */
+    private function isBalanced(array $billingDetails): bool
+    {
+        $balance = 0;
+        foreach ($billingDetails as $detail) {
+            $amount = floatval($detail['amount']);
+            // Type 0 is debit (cargo), Type 1 is credit (abono)
+            $balance += ($detail['type'] == 0) ? $amount : -$amount;
+        }
+
+        // Use a small epsilon value to handle floating point rounding errors
+        $epsilon = 0.001;
+        return abs($balance) < $epsilon;
+    }
+
+    /**
      * Display a listing of the resource.
      */
     public function index()
@@ -50,6 +67,16 @@ class BillingsController extends Controller
             'details' => 'required|string',
             'account_type' => 'required|string|in:ingreso,egreso,diario',
         ]);
+
+        // Check if billing details exist and are balanced
+        if (!isset($request->billingDetails) || count($request->billingDetails) < 2) {
+            return redirect()->back()->withErrors(['billingDetails' => 'Se requieren al menos dos detalles para una factura balanceada.']);
+        }
+
+        // Validate balance on the server side as well
+        if (!$this->isBalanced($request->billingDetails)) {
+            return redirect()->back()->withErrors(['billingDetails' => 'La cuenta debe estar balanceada. Los cargos deben ser iguales a los abonos.']);
+        }
 
         DB::beginTransaction();
 
@@ -129,6 +156,16 @@ class BillingsController extends Controller
             'details' => 'required|string',
             'account_type' => 'required|string|in:ingreso,egreso,diario',
         ]);
+
+        // Check if billing details exist and are balanced
+        if (!isset($request->billingDetails) || count($request->billingDetails) < 2) {
+            return redirect()->back()->withErrors(['billingDetails' => 'Se requieren al menos dos detalles para una factura balanceada.']);
+        }
+
+        // Validate balance on the server side as well
+        if (!$this->isBalanced($request->billingDetails)) {
+            return redirect()->back()->withErrors(['billingDetails' => 'La cuenta debe estar balanceada. Los cargos deben ser iguales a los abonos.']);
+        }
 
         DB::beginTransaction();
 

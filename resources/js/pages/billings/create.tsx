@@ -1,7 +1,7 @@
 import { type BreadcrumbItem } from '@/types';
 import { Transition } from '@headlessui/react';
 import { Head, useForm } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useState } from 'react';
 
 import HeadingSmall from '@/components/heading-small';
 import InputError from '@/components/input-error';
@@ -12,6 +12,9 @@ import AppLayout from '@/layouts/app-layout';
 import CrudLayout from '@/layouts/app/app-crud';
 import BillingDetailsGrid from './components/BillingDetailsGrid';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import BalanceSummary from './components/BalanceSummary';
+import { BillingForm } from './types';
+import { isBalanced } from './utils/calculations';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -32,12 +35,6 @@ interface BillingDetail {
     billing_id?: number;
 }
 
-interface BillingForm {
-    details: string;
-    account_type: string;
-    billingDetails: BillingDetail[];
-}
-
 // Account type options
 const ACCOUNT_TYPES = [
     { value: 'ingreso', label: 'Ingreso' },
@@ -52,8 +49,18 @@ export default function Create({ policies }: { policies: any[] }) {
         billingDetails: [],
     });
 
+    const [balanceError, setBalanceError] = useState<string | null>(null);
+
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
+
+        // Check if billing details are balanced before submitting
+        if (!isBalanced(data.billingDetails)) {
+            setBalanceError('No se puede guardar: La cuenta no está balanceada. Los cargos deben ser iguales a los abonos.');
+            return;
+        }
+
+        setBalanceError(null);
         post(route('billings.store'), {
             preserveScroll: true,
         });
@@ -108,9 +115,24 @@ export default function Create({ policies }: { policies: any[] }) {
                         <div className="border-t pt-6">
                             <BillingDetailsGrid
                                 billingDetails={data.billingDetails}
-                                onChange={(billingDetails) => setData('billingDetails', billingDetails)}
+                                onChange={(billingDetails) => {
+                                    setData('billingDetails', billingDetails);
+                                    setBalanceError(null); // Clear error when user makes changes
+                                }}
                                 policies={policies}
                             />
+
+                            {data.billingDetails.length > 0 && (
+                                <div className="mt-4">
+                                    <BalanceSummary billingDetails={data.billingDetails} />
+                                </div>
+                            )}
+
+                            {balanceError && (
+                                <div className="mt-2 text-sm text-red-600">
+                                    {balanceError}
+                                </div>
+                            )}
                         </div>
 
                         <div className="flex items-center gap-4">
