@@ -103,6 +103,12 @@ export default function View({ billing }: { billing: Billing }) {
                         <Button asChild variant="outline">
                             <Link href={route('billings.index')}>Back to List</Link>
                         </Button>
+                        <Button 
+                            onClick={() => window.open(route('billings.export.pdf', billing.id), '_blank')}
+                            variant="default"
+                        >
+                            Export PDF
+                        </Button>
                     </div>
                 </div>
             </CrudLayout>

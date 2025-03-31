@@ -23,6 +23,11 @@ const mainNavItems: NavItem[] = [
         href: '/billings/index',
         icon: LayoutGrid,
     },
+    {
+        title: 'Reports',
+        href: '/reports/index',
+        icon: LayoutGrid,
+    },
 ];
 
 export function AppSidebar() {

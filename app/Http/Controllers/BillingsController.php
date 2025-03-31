@@ -8,7 +8,10 @@ use App\Models\Policies;
 use App\Models\Subpolices;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
+use App\Services\PdfService;
+use Exception;
 
 class BillingsController extends Controller
 {
@@ -285,5 +288,74 @@ class BillingsController extends Controller
             return redirect()->back()
                 ->with('error', 'Error deleting billing: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Export billing to PDF
+     */
+    public function exportPdf($id)
+    {
+        try {
+            $billing = Billings::findOrFail($id);
+            $pdfService = app('pdf.service');
+
+            return $pdfService->generateBillingPdf($billing)->stream("billing-{$id}.pdf");
+        } catch (Exception $e) {
+            Log::error('Error exporting billing PDF', [
+                'billing_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()->back()->withErrors(['error' => 'Failed to generate PDF: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Export all billings to PDF
+     */
+    public function exportAllPdf(Request $request)
+    {
+        try {
+            // Get billings with optional filters
+            $query = Billings::query()->with('billingDetails.subpolicy.policy');
+
+            // Apply date range filter if provided
+            if ($request->has('start_date') && $request->has('end_date')) {
+                $query->whereBetween('created_at', [
+                    $request->start_date . ' 00:00:00',
+                    $request->end_date . ' 23:59:59'
+                ]);
+            }
+
+            $billings = $query->limit(100)->get(); // Limit to prevent huge PDFs
+
+            if ($billings->isEmpty()) {
+                return redirect()->back()->withErrors(['error' => 'No billings found for the specified period']);
+            }
+
+            Log::info('Exporting all billings to PDF', [
+                'count' => $billings->count(),
+                'date_range' => [$request->start_date, $request->end_date]
+            ]);
+
+            $pdfService = app('pdf.service');
+            return $pdfService->generateBillingListPdf($billings)->stream('all-billings.pdf');
+        } catch (Exception $e) {
+            Log::error('Error exporting all billings to PDF', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()->back()->withErrors(['error' => 'Failed to generate PDF: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Show the export options page
+     */
+    public function showExportOptions()
+    {
+        return Inertia::render('billings/export', []);
     }
 }
