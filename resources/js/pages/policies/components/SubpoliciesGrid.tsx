@@ -60,7 +60,7 @@ export default function SubpoliciesGrid({ subpolicies, onChange }: SubpoliciesGr
                                 <Input
                                     value={subpolicy.name}
                                     onChange={(e) => updateSubpolicy(index, e.target.value)}
-                                    placeholder="Subpolicy name"
+                                    placeholder="SubCuenta"
                                 />
                                 {subpolicy.id && (
                                     <input type="hidden" name={`subpolicies[${index}][id]`} value={subpolicy.id} />

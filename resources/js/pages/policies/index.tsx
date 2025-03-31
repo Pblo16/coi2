@@ -7,7 +7,7 @@ import CrudLayout from '@/layouts/app/app-crud';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Policies',
+        title: 'Cuentas',
         href: route('policies.index'),
     },
 ];
@@ -20,7 +20,7 @@ interface PoliciesProps {
 export default function Index({ policies, headers }: PoliciesProps) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Policies" />
+            <Head title="Cuentas" />
 
             <CrudLayout>
                 <ExpandableGrid

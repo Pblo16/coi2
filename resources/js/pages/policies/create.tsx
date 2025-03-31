@@ -14,11 +14,11 @@ import SubpoliciesGrid from './components/SubpoliciesGrid';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Policies',
+        title: 'Cuentas',
         href: route('policies.index'),
     },
     {
-        title: 'Create Policy',
+        title: 'Crear Cuenta',
         href: '#',
     },
 ];
@@ -53,11 +53,11 @@ export default function Create() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Create Policy" />
+            <Head title="Crear Cuenta" />
 
             <CrudLayout>
                 <div className="space-y-6">
-                    <HeadingSmall title="Policy information" description="Enter policy details" />
+                    <HeadingSmall title="Cuenta informacion" description="detalle de la cuenta" />
 
                     <form onSubmit={submit} className="space-y-6">
                         <div className="grid gap-2">
@@ -69,7 +69,7 @@ export default function Create() {
                                 value={data.name}
                                 onChange={(e) => setData('name', e.target.value)}
                                 required
-                                placeholder="Policy name"
+                                placeholder="Cuenta name"
                             />
 
                             <InputError className="mt-2" message={errors.name} />
@@ -84,7 +84,7 @@ export default function Create() {
                                 value={data.code}
                                 onChange={(e) => setData('code', e.target.value)}
                                 required
-                                placeholder="Policy code"
+                                placeholder="Cuenta code"
                                 type='number'
                             />
 
