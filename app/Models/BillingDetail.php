@@ -2,39 +2,48 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class BillingDetail extends Model
 {
-    protected $fillable = ['billing_id', 'policy_id', 'amount', 'type'];
+    use HasFactory;
 
-    // Type constants
-    const TYPE_DEBIT = 0;  // Cargo
-    const TYPE_CREDIT = 1; // Abono
-    const TYPE_INCOME = 2; // Ingreso
-    const TYPE_EXPENSE = 3; // Egreso
-    const TYPE_DAILY = 4;  // Diario
+    protected $fillable = [
+        'billing_id',
+        'subpolicy_id', // Changed from policy_id to subpolicy_id
+        'amount',
+        'type'
+    ];
+
+    protected $appends = [
+        'type_text'
+    ];
 
     public function billing(): BelongsTo
     {
         return $this->belongsTo(Billings::class, 'billing_id');
     }
 
+    public function subpolicy(): BelongsTo
+    {
+        return $this->belongsTo(Subpolices::class, 'subpolicy_id');
+    }
+
+    // Keep a policy accessor for compatibility
     public function policy(): BelongsTo
     {
-        return $this->belongsTo(Policies::class, 'policy_id');
+        return $this->subpolicy();
     }
 
     public function getTypeTextAttribute(): string
     {
-        return match ($this->type) {
-            self::TYPE_DEBIT => 'Cargo',
-            self::TYPE_CREDIT => 'Abono',
-            self::TYPE_INCOME => 'Ingreso',
-            self::TYPE_EXPENSE => 'Egreso',
-            self::TYPE_DAILY => 'Diario',
-            default => 'Desconocido'
-        };
+        $types = [
+            0 => 'Cargo (Debit)',
+            1 => 'Abono (Credit)'
+        ];
+
+        return $types[$this->type] ?? 'Unknown';
     }
 }

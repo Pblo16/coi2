@@ -16,7 +16,8 @@ return new class extends Migration
             $table->foreignId('billing_id')->constrained('billings')->onDelete('cascade');
             $table->decimal('amount', 10, 2);
             $table->integer('type')->default(0)->comment('0: debit (cargo), 1: credit (abono), 2: income (ingreso), 3: expense (egreso), 4: daily (diario)');
-            $table->foreignId('policy_id')->constrained('policies')->onDelete('cascade');
+            // Change from policy_id to subpolicy_id
+            $table->foreignId('subpolicy_id')->constrained('subpolices')->onDelete('cascade');
             $table->timestamps();
         });
     }

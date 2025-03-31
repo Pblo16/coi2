@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import BalanceSummary from './components/BalanceSummary';
 import { Billing, BillingForm } from './types';
 import { isBalanced } from './utils/calculations';
+import DebugData from './components/DebugData';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -66,6 +67,7 @@ export default function Edit({ billing, policies }: { billing: Billing, policies
             policy_id: detail.policy_id,
             amount: detail.amount,
             type: detail.type.toString(),
+            policy: detail.policy // Keep policy for reference
         })) : [],
     });
 
@@ -75,6 +77,8 @@ export default function Edit({ billing, policies }: { billing: Billing, policies
         // Debug the loading of billing details
         console.log('Loaded billing:', billing);
         console.log('Initial form data:', data);
+        // Log available policies to help identify potential issues
+        console.log('Available policies:', policies);
     }, []);
 
     const submit: FormEventHandler = (e) => {
@@ -87,12 +91,21 @@ export default function Edit({ billing, policies }: { billing: Billing, policies
         }
 
         setBalanceError(null);
-        // Debug submission data
-        console.log('Submitting form data:', data);
 
-        patch(route('billings.update', billing.id), {
-            preserveScroll: true,
-        });
+        // Ensure all numeric values are properly formatted for backend processing
+        const formattedData = {
+            ...data,
+            billingDetails: data.billingDetails.map(detail => ({
+                id: detail.id ? parseInt(detail.id.toString()) : undefined,
+                policy_id: parseInt(detail.policy_id.toString()),
+                amount: parseFloat(detail.amount.toString()),
+                type: parseInt(detail.type.toString())
+            }))
+        };
+
+        console.log('Submitting formatted data:', formattedData);
+
+        patch(route('billings.update', billing.id), formattedData);
     };
 
     return (
@@ -102,6 +115,14 @@ export default function Edit({ billing, policies }: { billing: Billing, policies
             <CrudLayout>
                 <div className="space-y-6">
                     <HeadingSmall title="Billing information" description="Update billing details" />
+
+                    {/* Add debug data component in development environment */}
+                    {process.env.NODE_ENV !== 'production' && (
+                        <>
+                            <DebugData data={data.billingDetails} title="Current Billing Details" />
+                            <DebugData data={policies} title="Available Policies" />
+                        </>
+                    )}
 
                     <form onSubmit={submit} className="space-y-6">
                         <div className="grid gap-2">

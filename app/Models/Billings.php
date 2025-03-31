@@ -2,17 +2,22 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Billings extends Model
 {
-    protected $fillable = ['details', 'account_type'];
+    use HasFactory;
 
-    // Account type constants
-    const TYPE_INCOME = 'ingreso';
-    const TYPE_EXPENSE = 'egreso';
-    const TYPE_DAILY = 'diario';
+    protected $fillable = [
+        'details',
+        'account_type',
+    ];
+
+    protected $appends = [
+        'account_type_text'
+    ];
 
     public function billingDetails(): HasMany
     {
@@ -21,11 +26,12 @@ class Billings extends Model
 
     public function getAccountTypeTextAttribute(): string
     {
-        return match ($this->account_type) {
-            self::TYPE_INCOME => 'Ingreso',
-            self::TYPE_EXPENSE => 'Egreso',
-            self::TYPE_DAILY => 'Diario',
-            default => $this->account_type
-        };
+        $types = [
+            'ingreso' => 'Ingreso',
+            'egreso' => 'Egreso',
+            'diario' => 'Diario',
+        ];
+
+        return $types[$this->account_type] ?? 'Unknown';
     }
 }

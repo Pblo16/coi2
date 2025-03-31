@@ -27,10 +27,13 @@ const TRANSACTION_TYPES = [
 ];
 
 export default function BillingDetailsGrid({ billingDetails, onChange, policies }: BillingDetailsGridProps) {
+    // Convert types to strings for consistent UI handling
     const [billingDetailsList, setBillingDetailsList] = useState<BillingDetail[]>(
         billingDetails?.map(detail => ({
             ...detail,
-            type: typeof detail.type === 'number' ? detail.type.toString() : detail.type
+            policy_id: detail.policy_id.toString(),
+            amount: detail.amount.toString(),
+            type: detail.type.toString()
         })) || []
     );
 
@@ -40,7 +43,9 @@ export default function BillingDetailsGrid({ billingDetails, onChange, policies 
             console.log('BillingDetailsGrid received details:', billingDetails);
             const formattedDetails = billingDetails.map(detail => ({
                 ...detail,
-                type: typeof detail.type === 'number' ? detail.type.toString() : detail.type
+                policy_id: detail.policy_id.toString(),
+                amount: detail.amount.toString(),
+                type: detail.type.toString()
             }));
             setBillingDetailsList(formattedDetails);
         }
@@ -79,7 +84,7 @@ export default function BillingDetailsGrid({ billingDetails, onChange, policies 
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>Policy</TableHead>
+                        <TableHead>Subpolicy</TableHead>
                         <TableHead>Amount</TableHead>
                         <TableHead>Type</TableHead>
                         <TableHead className="w-[100px]">Actions</TableHead>
@@ -94,12 +99,12 @@ export default function BillingDetailsGrid({ billingDetails, onChange, policies 
                                     onValueChange={(value) => updateBillingDetail(index, 'policy_id', value)}
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select Policy" />
+                                        <SelectValue placeholder="Select Subpolicy" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {policies.map((policy) => (
-                                            <SelectItem key={policy.id} value={policy.id.toString()}>
-                                                {policy.name}
+                                        {policies.map((subpolicy) => (
+                                            <SelectItem key={subpolicy.id} value={subpolicy.id.toString()}>
+                                                {subpolicy.name} {subpolicy.policy && `(${subpolicy.policy.name})`}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>

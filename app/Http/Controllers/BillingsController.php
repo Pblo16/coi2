@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Billings;
 use App\Models\BillingDetail;
 use App\Models\Policies;
+use App\Models\Subpolices;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -52,9 +53,10 @@ class BillingsController extends Controller
      */
     public function create()
     {
-        $policies = Policies::all();
+        // Get subpolicies for billing details
+        $subpolicies = Subpolices::with('policy')->get();
         return Inertia::render('billings/create', [
-            'policies' => $policies,
+            'policies' => $subpolicies, // We're keeping the variable name 'policies' for frontend compatibility
         ]);
     }
 
@@ -88,7 +90,7 @@ class BillingsController extends Controller
                 foreach ($request->billingDetails as $detail) {
                     if (!empty($detail['policy_id']) && !empty($detail['amount'])) {
                         $billing->billingDetails()->create([
-                            'policy_id' => $detail['policy_id'],
+                            'subpolicy_id' => $detail['policy_id'], // Use policy_id from the request, but store as subpolicy_id
                             'amount' => $detail['amount'],
                             'type' => $detail['type'] ?? 0,
                         ]);
@@ -123,27 +125,29 @@ class BillingsController extends Controller
      */
     public function edit($id)
     {
-        $billing = Billings::with('billingDetails.policy')->findOrFail($id);
+        $billing = Billings::with('billingDetails.subpolicy')->findOrFail($id);
 
         // Transform the billing details to ensure consistency with the expected structure
+        // Map subpolicy back to policy for frontend compatibility
         $billingDetails = $billing->billingDetails->map(function ($detail) {
             return [
                 'id' => $detail->id,
-                'policy_id' => $detail->policy_id,
+                'policy_id' => $detail->subpolicy_id,  // Map subpolicy_id to policy_id for frontend
                 'amount' => $detail->amount,
                 'type' => $detail->type,
-                'policy' => $detail->policy
+                'policy' => $detail->subpolicy  // Map subpolicy to policy for frontend
             ];
         });
 
         // Replace the billingDetails with the transformed version
         $billing->billingDetails = $billingDetails;
 
-        $policies = Policies::all();
+        // Get subpolicies that can be used in billing details
+        $subpolicies = Subpolices::with('policy')->get();
 
         return Inertia::render('billings/edit', [
             'billing' => $billing,
-            'policies' => $policies,
+            'policies' => $subpolicies,  // We're keeping the variable name 'policies' for frontend compatibility
         ]);
     }
 
@@ -152,6 +156,9 @@ class BillingsController extends Controller
      */
     public function update(Request $request, $id)
     {
+        // Add debug logging at the start
+        \Log::info('Update request received', ['data' => $request->all()]);
+
         $request->validate([
             'details' => 'required|string',
             'account_type' => 'required|string|in:ingreso,egreso,diario',
@@ -162,8 +169,31 @@ class BillingsController extends Controller
             return redirect()->back()->withErrors(['billingDetails' => 'Se requieren al menos dos detalles para una factura balanceada.']);
         }
 
-        // Validate balance on the server side as well
-        if (!$this->isBalanced($request->billingDetails)) {
+        // Validate that subpolicy_ids exist in the subpolices table
+        $subpolicyIds = collect($request->billingDetails)->pluck('policy_id')->unique()->toArray();
+        $existingSubpolicyIds = Subpolices::whereIn('id', $subpolicyIds)->pluck('id')->toArray();
+        $invalidSubpolicyIds = array_diff($subpolicyIds, $existingSubpolicyIds);
+
+        if (!empty($invalidSubpolicyIds)) {
+            \Log::error('Invalid subpolicy IDs detected', ['invalidIds' => $invalidSubpolicyIds]);
+            return redirect()->back()->withErrors(['billingDetails' => 'Algunas subpolicies seleccionadas no son válidas.']);
+        }
+
+        // Normalize billing details types to ensure they're numeric for isBalanced function
+        $normalizedDetails = collect($request->billingDetails)->map(function ($detail) {
+            return [
+                'id' => isset($detail['id']) ? (int)$detail['id'] : null,
+                'subpolicy_id' => (int)$detail['policy_id'], // Map policy_id from frontend to subpolicy_id
+                'amount' => (float)$detail['amount'],
+                'type' => (int)$detail['type'],
+            ];
+        })->toArray();
+
+        // Log normalized details
+        \Log::info('Normalized billing details', ['normalizedDetails' => $normalizedDetails]);
+
+        // Validate balance on the server side
+        if (!$this->isBalanced($normalizedDetails)) {
             return redirect()->back()->withErrors(['billingDetails' => 'La cuenta debe estar balanceada. Los cargos deben ser iguales a los abonos.']);
         }
 
@@ -174,33 +204,41 @@ class BillingsController extends Controller
             $billing->update($request->only(['details', 'account_type']));
 
             // Handle billing details if present
-            if ($request->has('billingDetails')) {
+            if (isset($request->billingDetails) && is_array($request->billingDetails)) {
                 // Get IDs of existing details to determine which ones to delete
                 $existingIds = $billing->billingDetails()->pluck('id')->toArray();
-                $updatedIds = collect($request->billingDetails)->pluck('id')->filter()->toArray();
+                \Log::info('Existing detail IDs', ['existingIds' => $existingIds]);
+
+                $updatedIds = collect($normalizedDetails)
+                    ->pluck('id')
+                    ->filter()
+                    ->toArray();
+                \Log::info('Updated detail IDs', ['updatedIds' => $updatedIds]);
 
                 // Delete details that are not in the updated list
                 $toDelete = array_diff($existingIds, $updatedIds);
-                BillingDetail::whereIn('id', $toDelete)->delete();
+                \Log::info('IDs to delete', ['toDelete' => $toDelete]);
 
-                // Update or create details
-                foreach ($request->billingDetails as $detail) {
+                if (!empty($toDelete)) {
+                    BillingDetail::whereIn('id', $toDelete)->delete();
+                }
+
+                // Process each detail
+                foreach ($normalizedDetails as $detail) {
+                    $detailData = [
+                        'subpolicy_id' => $detail['subpolicy_id'], // Use subpolicy_id instead of policy_id
+                        'amount' => $detail['amount'],
+                        'type' => $detail['type'],
+                    ];
+
                     if (!empty($detail['id'])) {
-                        // Update existing
-                        BillingDetail::where('id', $detail['id'])->update([
-                            'policy_id' => $detail['policy_id'],
-                            'amount' => $detail['amount'],
-                            'type' => $detail['type'],
-                        ]);
+                        // Update existing detail
+                        \Log::info('Updating detail', ['id' => $detail['id'], 'data' => $detailData]);
+                        BillingDetail::where('id', $detail['id'])->update($detailData);
                     } else {
-                        // Create new
-                        if (!empty($detail['policy_id']) && !empty($detail['amount'])) {
-                            $billing->billingDetails()->create([
-                                'policy_id' => $detail['policy_id'],
-                                'amount' => $detail['amount'],
-                                'type' => $detail['type'] ?? 0,
-                            ]);
-                        }
+                        // Create new detail
+                        \Log::info('Creating new detail', ['data' => $detailData]);
+                        $billing->billingDetails()->create($detailData);
                     }
                 }
             }
@@ -210,6 +248,7 @@ class BillingsController extends Controller
                 ->with('success', 'Billing updated successfully');
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error('Error updating billing', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return redirect()->back()
                 ->with('error', 'Error updating billing: ' . $e->getMessage());
         }
