@@ -4,6 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import SearchableSubpolicySelect from './SearchableSubpolicySelect';
 
 interface BillingDetail {
     id?: number;
@@ -84,31 +85,22 @@ export default function BillingDetailsGrid({ billingDetails, onChange, policies 
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>Subpolicy</TableHead>
+                        <TableHead className="w-[45%]">Subpolicy</TableHead>
                         <TableHead>Amount</TableHead>
                         <TableHead>Type</TableHead>
-                        <TableHead className="w-[100px]">Actions</TableHead>
+                        <TableHead className="w-[80px]">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {billingDetailsList.map((detail, index) => (
                         <TableRow key={index}>
-                            <TableCell>
-                                <Select
+                            <TableCell className="relative">
+                                <SearchableSubpolicySelect
                                     value={detail.policy_id.toString()}
-                                    onValueChange={(value) => updateBillingDetail(index, 'policy_id', value)}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select Subpolicy" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {policies.map((subpolicy) => (
-                                            <SelectItem key={subpolicy.id} value={subpolicy.id.toString()}>
-                                                {subpolicy.name} {subpolicy.policy && `(${subpolicy.policy.name})`}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                    onChange={(value) => updateBillingDetail(index, 'policy_id', value)}
+                                    options={policies}
+                                    placeholder="Search subpolicy..."
+                                />
                                 {detail.id && (
                                     <input type="hidden" name={`billingDetails[${index}][id]`} value={detail.id} />
                                 )}

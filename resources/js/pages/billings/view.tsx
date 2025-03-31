@@ -13,6 +13,10 @@ interface BillingDetail {
     policy: {
         id: number;
         name: string;
+        policy?: {
+            id: number;
+            name: string;
+        }
     };
     amount: number;
     type: number;
@@ -71,7 +75,12 @@ export default function View({ billing }: { billing: Billing }) {
                             <TableBody>
                                 {billing.billingDetails.map((detail) => (
                                     <TableRow key={detail.id}>
-                                        <TableCell>{detail.policy.name}</TableCell>
+                                        <TableCell>
+                                            {detail.policy?.policy
+                                                ? `${detail.policy.policy.name}-${detail.policy.name}`
+                                                : detail.policy?.name
+                                            }
+                                        </TableCell>
                                         <TableCell>{detail.amount}</TableCell>
                                         <TableCell>{detail.type_text}</TableCell>
                                     </TableRow>

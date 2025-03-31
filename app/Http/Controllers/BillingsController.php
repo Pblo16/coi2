@@ -53,10 +53,10 @@ class BillingsController extends Controller
      */
     public function create()
     {
-        // Get subpolicies for billing details
+        // Get subpolicies for billing details with their parent policies
         $subpolicies = Subpolices::with('policy')->get();
         return Inertia::render('billings/create', [
-            'policies' => $subpolicies, // We're keeping the variable name 'policies' for frontend compatibility
+            'policies' => $subpolicies,
         ]);
     }
 
@@ -113,7 +113,23 @@ class BillingsController extends Controller
      */
     public function show($id)
     {
-        $billing = Billings::with('billingDetails.policy')->findOrFail($id);
+        // Include the parent policy data in the response
+        $billing = Billings::with('billingDetails.subpolicy.policy')->findOrFail($id);
+
+        // Transform billing details to map subpolicy to policy for frontend
+        $billing->billingDetails = $billing->billingDetails->map(function ($detail) {
+            return [
+                'id' => $detail->id,
+                'amount' => $detail->amount,
+                'type' => $detail->type,
+                'type_text' => $detail->type_text,
+                'policy' => [
+                    'id' => $detail->subpolicy->id,
+                    'name' => $detail->subpolicy->name,
+                    'policy' => $detail->subpolicy->policy ?? null
+                ]
+            ];
+        });
 
         return Inertia::render('billings/view', [
             'billing' => $billing,
@@ -125,7 +141,8 @@ class BillingsController extends Controller
      */
     public function edit($id)
     {
-        $billing = Billings::with('billingDetails.subpolicy')->findOrFail($id);
+        // Include the parent policy in the loaded data
+        $billing = Billings::with('billingDetails.subpolicy.policy')->findOrFail($id);
 
         // Transform the billing details to ensure consistency with the expected structure
         // Map subpolicy back to policy for frontend compatibility
